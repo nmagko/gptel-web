@@ -13,7 +13,8 @@ Web search tools for gptel.
 ### Goals
 
 - Provide a simple alternative to MCP-based `search_web`.
-- Use `ddgr` (GPLv3) to search the Internet.
+- Use DuckDuckGo through the local `ddgr` (GPLv3) command to search the
+  Internet.
 - Keep the setup simple, lightweight, reliable, and easy to debug.
 
 ## Prerequisites
