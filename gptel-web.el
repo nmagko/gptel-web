@@ -3,8 +3,9 @@
 ;; Copyright (C) 2026  Victor C. Salas P.
 
 ;; Author: Victor C. Salas P. <victor.salas at member.fsf.org>
-;; Simple web search tool (MCP web_search alternative) that works and
-;; suck less. It uses the ddgr package to search the Internet.
+;; Simple web search tool (MCP search_web alternative) that works and
+;; suck less. Search the live web using DuckDuckGo through the local
+;; ddgr command.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -22,8 +23,10 @@
 (require 'json)
 (require 'subr-x)
 
+;; function that returns the raw search results
 (defun vc/ddgr-search (query &optional max-results)
-  "Search DuckDuckGo using ddgr and return results as text."
+  "Search DuckDuckGo using ddgr and returns the raw search results as
+text."
   (let* ((n (or max-results 5))
          (buffer (generate-new-buffer " *ddgr*"))
          (status
@@ -45,6 +48,7 @@
                    (buffer-string))))
       (kill-buffer buffer))))
 
+;; gptel tool definition
 (defvar vc/gptel-ddgr-tool
   (gptel-make-tool
    :name "search_web"
@@ -59,10 +63,12 @@ Returns search-result titles, domains, URLs, and snippets."
     '(:name "query"
 	    :type string
 	    :description
-	    "A focused web search query, including product names, versions, and dates when relevant.")
+	    "A focused web search query, including product names,
+	    versions, and dates when needed.")
     '(:name "max_results"
 	    :type integer
-	    :description "Maximum number of results to return, usually 3 to 8."
+	    :description
+	    "Maximum number of results to return, usually 3 to 8."
 	    :optional t))
    :category "web"
    :confirm t
