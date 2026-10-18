@@ -39,10 +39,11 @@ text."
            "--num" (number-to-string n)
            query)))
     (unwind-protect
-        (if (zerop status)
+	(if (and (integerp status)
+		 (zerop status))
             (with-current-buffer buffer
               (string-trim (buffer-string)))
-          (error "ddgr exited with status %d: %s"
+	  (error "ddgr exited with status %s: %s"
                  status
                  (with-current-buffer buffer
                    (buffer-string))))
@@ -75,3 +76,5 @@ Returns search-result titles, domains, URLs, and snippets."
    :include t))
 
 (add-to-list 'gptel-tools vc/gptel-ddgr-tool)
+
+(provide 'gptel-web)

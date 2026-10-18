@@ -8,7 +8,7 @@
 
 ### Brief
 
-Web search tools for gptel.
+Web search & file tools for gptel.
 
 ### Goals
 
@@ -16,6 +16,8 @@ Web search tools for gptel.
 - Use DuckDuckGo through the local `ddgr` (GPLv3) command to search the
   Internet.
 - Keep the setup simple, lightweight, reliable, and easy to debug.
+- Restricted file creation tool for gptel. Saves generated UTF-8 files
+  to a designated output directory.
 
 ## Prerequisites
 
@@ -63,9 +65,11 @@ M-x package-install RET gptel RET
 
 ## Configure gptel
 
-Add the following to your `init.el` (or `.emacs`):
+Add the following to your `init.el` (or `.emacs`). You can set
+`vc/gptel-root-path` here. `~/src/g/gptel` is the default:
 
 ```elisp
+;; GPTEL
 (use-package gptel
   :ensure t
   :config
@@ -73,12 +77,23 @@ Add the following to your `init.el` (or `.emacs`):
   (setq gptel-backend
         (gptel-make-openai-oauth "ChatGPT Plus"))
   ;; Default model
-  (setq gptel-model 'gpt-5.4-mini)
-  ;; Major mode for saved chats
+  (setq gptel-model 'gpt-5.6-sol)
+  ;; Use Org-mode for new GPTEL conversations
+  (setq gptel-default-mode 'org-mode)
+  ;; Saved Org chats under vc/gptel-root-path (~/src/g/gptel default)
+  (setq vc/gptel-root-path "~/src/g/gptel")
+  (defun vc/gptel-org-setup ()
+    "Enable gptel-mode for Org files in the GPTEL chats directory"
+    (when (and buffer-file-name
+               (file-in-directory-p
+                buffer-file-name
+                (expand-file-name vc/gptel-root-path)))
+      (gptel-mode 1)))
+  (add-hook 'org-mode-hook #'vc/gptel-org-setup)
+  ;; Legacy .chat compatibility
   (define-derived-mode gptel-chat-mode text-mode "GPTEL-Chat"
-    "Major mode for saved gptel conversations."
+    "Major mode for legacy gptel conversations"
     (gptel-mode 1))
-  ;; Associate .chat files
   (add-to-list 'auto-mode-alist
                '("\\.chat\\'" . gptel-chat-mode)))
 ```
@@ -110,7 +125,22 @@ Then add the following near the end of your `init.el` (or `.emacs`):
 (load "~/src/e/gptel-web/gptel-web.el")
 ```
 
+Optionally, you can add the following module that saves files in the
+folder `output/` inside the path `vc/gptel-root-path` defined in the
+Elisp code above. It isn't mandatory. If, for security reasons, you
+don't want to allow the agent to write files in a contained output
+directory, you don't need to include it. Add the following near the end
+of your `init.el` (or `.emacs`):
+
+```elisp
+(load "~/src/e/gptel-web/gptel-file.el")
+```
+
 Restart Emacs or evaluate the configuration.
+
+**Note:** Verify if `vc/gptel-root-path` & `vc/gptel-root-path/output/`
+  are created. For this example, we set `vc/gptel-root-path` to
+  `~/src/g/gptel`.
 
 ## Verify installation
 
@@ -120,11 +150,13 @@ Display the list of registered tools:
 M-x gptel-tools
 ```
 
-You should see the `web` category containing the `search_web` tool.
+You should see the `web` category containing the `search_web`
+tool. Optionally, if you enabled gptel-file, you'll see the `filesystem`
+category containing the `create_file` tool as well.
 
 ![Alt gptel-tools](img/gptel-tools.png)
 
-## Test
+## Testing search_web
 
 Open a gptel chat and ask a question that requires current information,
 for example:
@@ -137,3 +169,11 @@ If tool confirmation is enabled, gptel will ask for confirmation before
 running the local `ddgr` command.
 
 ![Alt gptel-web_search_2](img/gptel-web-search-2.png)
+
+## Testing search_web and create_file
+
+After you ask to look for something on the internet or create and save a
+file, press `C-c RET` to submit your request. Before any action, it will
+ask for approval: press `C-c C-c` to approve, then enjoy.
+
+![Alt gptel-web_search_create](img/gptel-web-file-search-create.png)
