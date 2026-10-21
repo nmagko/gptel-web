@@ -8,16 +8,23 @@
 
 ### Brief
 
-Web search & file tools for gptel.
+Web search & file tools for gptel. It now includes workspace handling
+for projects.
 
 ### Goals
 
 - Provide a simple alternative to MCP-based `search_web`.
 - Use DuckDuckGo through the local `ddgr` (GPLv3) command to search the
   Internet.
-- Keep the setup simple, lightweight, reliable, and easy to debug.
 - Restricted file creation tool for gptel. Saves generated UTF-8 files
   to a designated output directory.
+- Restricted project workspace tools. Projects copies can be placed
+  under a dedicated workspace directory.
+- Keep the setup simple, lightweight, reliable, and easy to debug.
+
+## Main policy
+
+Avoid unnecessary features.
 
 ## Prerequisites
 
@@ -25,6 +32,7 @@ Web search & file tools for gptel.
 - Internet connection.
 - `ddgr` installed.
 - `gptel` installed from MELPA (recommended latest version).
+- `cl-lib` standard with Emacs Lisp.
 
 ## Install ddgr (example: Devuan/Debian)
 
@@ -125,22 +133,27 @@ Then add the following near the end of your `init.el` (or `.emacs`):
 (load "~/src/e/gptel-web/gptel-web.el")
 ```
 
-Optionally, you can add the following module that saves files in the
-folder `output/` inside the path `vc/gptel-root-path` defined in the
-Elisp code above. It isn't mandatory. If, for security reasons, you
-don't want to allow the agent to write files in a contained output
-directory, you don't need to include it. Add the following near the end
-of your `init.el` (or `.emacs`):
+Optionally, you can add the following modules: gptel-file pew files in
+the directory `output/` and gptel-project messes inside the `workspace/`
+directory, capable of handling hierarchical directories and files
+there. These directories depend on `vc/gptel-root-path` defined in the
+Elisp code above. These aren't mandatory if you just want to add
+browsing capability, and you are paranoid about security. But in
+general, the following modules are contained (jailed) inside their
+respective directories. You can inspect the code yourself. They are tiny
+for easy understanding. Add the following near the end of your `init.el`
+(or `.emacs`) if you wanna use them:
 
 ```elisp
 (load "~/src/e/gptel-web/gptel-file.el")
+(load "~/src/e/gptel-web/gptel-project.el")
 ```
 
 Restart Emacs or evaluate the configuration.
 
-**Note:** Verify if `vc/gptel-root-path` & `vc/gptel-root-path/output/`
-  are created. For this example, we set `vc/gptel-root-path` to
-  `~/src/g/gptel`.
+**Note:** Verify if `vc/gptel-root-path`, `vc/gptel-root-path/output/` &
+`vc/gptel-root-path/workspace/` are created. For this example, we set
+`vc/gptel-root-path` to `~/src/g/gptel`.
 
 ## Verify installation
 
@@ -151,8 +164,10 @@ M-x gptel-tools
 ```
 
 You should see the `web` category containing the `search_web`
-tool. Optionally, if you enabled gptel-file, you'll see the `filesystem`
-category containing the `create_file` tool as well.
+tool. Optionally, if you enabled gptel-file and gptel-project, you'll
+see the `filesystem` category containing the `create_file`,
+`list_project_files`, `read_project_file`, `update_project_file`,
+`create_project_directory`, and `create_project_file` tools as well.
 
 ![Alt gptel-tools](img/gptel-tools.png)
 
