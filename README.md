@@ -16,6 +16,8 @@ for projects.
 - Provide a simple alternative to MCP-based `search_web`.
 - Use DuckDuckGo through the local `ddgr` (GPLv3) command to search the
   Internet.
+- Provides a `fetch_url` tool for retrieving long content from a public
+  HTTP or HTTPS URL and return readable text.
 - Restricted file creation tool for gptel. Saves generated UTF-8 files
   to a designated output directory.
 - Restricted project workspace tools. Projects copies can be placed
@@ -163,11 +165,12 @@ Display the list of registered tools:
 M-x gptel-tools
 ```
 
-You should see the `web` category containing the `search_web`
-tool. Optionally, if you enabled gptel-file and gptel-project, you'll
-see the `filesystem` category containing the `create_file`,
-`list_project_files`, `read_project_file`, `update_project_file`,
-`create_project_directory`, and `create_project_file` tools as well.
+You should see the `web` category containing the `search_web` and
+`fetch_url` tools. Optionally, if you enabled gptel-file and
+gptel-project, you'll see the `filesystem` category containing the
+`create_file`, `list_project_files`, `read_project_file`,
+`update_project_file`, `create_project_directory`, and
+`create_project_file` tools as well.
 
 ![Alt gptel-tools](img/gptel-tools.png)
 
