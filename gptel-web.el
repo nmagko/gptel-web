@@ -105,10 +105,31 @@ Returns search-result titles, domains, URLs, and snippets."
       (error "Local or private URL is not allowed: %s" url)))
   url)
 
-(defun vc/gptel-web--html-to-text (start)
-  "Convert HTML from START to the end of the current buffer to text."
-  (let ((document (libxml-parse-html-region start (point-max))))
-    (with-temp-buffer
+(defun vc/gptel-web--decode-text (text charset)
+  "Decode HTTP body TEXT using CHARSET, defaulting to UTF-8."
+  (let* ((coding (and charset (intern-soft (downcase charset))))
+         (decoded (decode-coding-string
+                   text
+                   (if (and coding (coding-system-p coding))
+                       coding
+                     'utf-8))))
+    ;; Replace undecodable raw bytes and unsafe control characters.
+    (apply #'string
+           (mapcar (lambda (char)
+                     (cond
+                      ((eq (char-charset char) 'eight-bit) #xfffd)
+                      ((and (< char 32)
+                            (not (memq char '(9 10 13))))
+                       ?\s)
+                      (t char)))
+                   decoded))))
+
+(defun vc/gptel-web--html-to-text (html)
+  "Convert HTML to readable text."
+  (with-temp-buffer
+    (insert html)
+    (let ((document (libxml-parse-html-region (point-min) (point-max))))
+      (erase-buffer)
       (shr-insert-document document)
       (string-trim (buffer-string)))))
 
@@ -136,14 +157,22 @@ MAX-CHARACTERS cannot exceed `vc/gptel-web-max-characters'."
                         (goto-char (point-min))
                         (and (re-search-forward "\r?\n\r?\n" nil t)
                              (point)))))
-                 (content-type
+                 (content-type-header
                   (save-excursion
                     (goto-char (point-min))
                     (if (re-search-forward
-                         "^Content-[Tt]ype:[ \t]*\\([^;\r\n]+\\)"
+                         "^Content-[Tt]ype:[ \t]*\\([^\r\n]+\\)"
                          header-end t)
                         (downcase (match-string 1))
                       "")))
+                 (content-type
+                  (string-trim
+                   (car (split-string content-type-header ";"))))
+                 (charset
+                  (and (string-match
+                        "charset=[\"']?\\([^;\"'[:space:]]+\\)"
+                        content-type-header)
+                       (match-string 1 content-type-header)))
                  (final-url
                   (if (and (boundp 'url-current-object)
                            url-current-object)
@@ -157,26 +186,28 @@ MAX-CHARACTERS cannot exceed `vc/gptel-web-max-characters'."
                      vc/gptel-web-max-response-bytes)
               (error "Response exceeds the %s-byte limit"
                      vc/gptel-web-max-response-bytes))
-            (cond
-             ((string-match-p
-               "\\`\\(?:text/html\\|application/xhtml+xml\\)"
-               content-type)
-              (setq text (vc/gptel-web--html-to-text header-end)))
-             ((or (string-prefix-p "text/" content-type)
-                  (string-match-p
-                   "\\`application/\\(?:json\\|xml\\|.*+json\\|.*+xml\\)"
-                   content-type))
-              (setq text
-                    (string-trim
-                     (buffer-substring-no-properties
-                      header-end (point-max)))))
-             ((string= content-type "application/pdf")
-              (error "PDF extraction is not supported yet"))
-             (t
-              (error "Unsupported content type: %s"
-                     (if (string-empty-p content-type)
-                         "unknown"
-                       content-type))))
+            (let ((body
+                   (vc/gptel-web--decode-text
+                    (buffer-substring-no-properties
+                     header-end (point-max))
+                    charset)))
+              (cond
+               ((string-match-p
+                 "\\`\\(?:text/html\\|application/xhtml+xml\\)"
+                 content-type)
+                (setq text (vc/gptel-web--html-to-text body)))
+               ((or (string-prefix-p "text/" content-type)
+                    (string-match-p
+                     "\\`application/\\(?:json\\|xml\\|.*+json\\|.*+xml\\)"
+                     content-type))
+                (setq text (string-trim body)))
+               ((string= content-type "application/pdf")
+                (error "PDF extraction is not supported yet"))
+               (t
+                (error "Unsupported content type: %s"
+                       (if (string-empty-p content-type)
+                           "unknown"
+                         content-type)))))
             (when (> (length text) limit)
               (setq text
                     (concat (substring text 0 limit)
